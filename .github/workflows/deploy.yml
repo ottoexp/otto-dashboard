@@ -1,0 +1,68 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: https://staging.otto.my.id
+
+      - name: Package standalone
+        run: |
+          cp -r .next/static .next/standalone/.next/static
+          cp -r public .next/standalone/public
+          tar -czf deploy.tar.gz -C .next/standalone .
+
+      - name: Upload to server
+        env:
+          SSHPASS: ${{ secrets.SSH_PASS }}
+        run: |
+          sudo apt-get install -y sshpass
+          sshpass -e scp -o StrictHostKeyChecking=no deploy.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/deploy.tar.gz
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASS }}
+          script: |
+            sudo su - otto-staging -c "
+              mkdir -p ~/htdocs/staging.otto.my.id
+              cd ~/htdocs/staging.otto.my.id
+              tar -xzf /tmp/deploy.tar.gz --strip-components=0
+            "
+            # Write .env for otto-staging
+            sudo su - otto-staging -c "cat > ~/htdocs/staging.otto.my.id/.env.local << EOF
+            NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+            NEXTAUTH_URL=https://staging.otto.my.id
+            EOF"
+            # Restart via PM2 (running as ubuntu, pointing to otto-staging dir)
+            export PATH="$HOME/.local/share/fnm:$PATH"
+            eval "$(fnm env --shell bash)"
+            export PATH="$HOME/.npm-global/bin:$PATH"
+            pm2 describe otto-dashboard > /dev/null 2>&1 \
+              && pm2 restart otto-dashboard \
+              || pm2 start /home/otto-staging/htdocs/staging.otto.my.id/server.js \
+                   --name otto-dashboard \
+                   --cwd /home/otto-staging/htdocs/staging.otto.my.id \
+                   -e /home/otto-staging/htdocs/staging.otto.my.id/.env.local
+            pm2 save
