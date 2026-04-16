@@ -1,64 +1,118 @@
-import Image from "next/image";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-export default function Home() {
+const stats = [
+  { title: "Total Revenue", value: "$45,231", change: "+20.1%", up: true },
+  { title: "Active Users", value: "2,350", change: "+15.3%", up: true },
+  { title: "New Orders", value: "1,247", change: "+8.2%", up: true },
+  { title: "Pending", value: "43", change: "-4.5%", up: false },
+];
+
+const orders = [
+  { id: "#ORD-001", customer: "Alice Johnson", amount: "$240.00", status: "Completed" },
+  { id: "#ORD-002", customer: "Bob Smith", amount: "$180.50", status: "Processing" },
+  { id: "#ORD-003", customer: "Carol White", amount: "$95.00", status: "Pending" },
+  { id: "#ORD-004", customer: "David Lee", amount: "$320.00", status: "Completed" },
+  { id: "#ORD-005", customer: "Eva Brown", amount: "$145.75", status: "Processing" },
+];
+
+const statusColor: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  Completed: "default",
+  Processing: "secondary",
+  Pending: "outline",
+};
+
+export default function Dashboard() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <aside className="w-56 bg-white border-r flex flex-col gap-1 px-3 py-6">
+        <div className="px-3 mb-6">
+          <span className="text-lg font-bold tracking-tight">Otto Dashboard</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        {["Overview", "Orders", "Products", "Customers", "Analytics", "Settings"].map((item) => (
+          <button
+            key={item}
+            className={`text-left px-3 py-2 rounded-md text-sm transition-colors ${
+              item === "Overview"
+                ? "bg-gray-100 font-medium text-gray-900"
+                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            {item}
+          </button>
+        ))}
+      </aside>
+
+      {/* Main */}
+      <main className="flex-1 p-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold">Overview</h1>
+            <p className="text-sm text-gray-500 mt-1">Welcome back, Admin</p>
+          </div>
+          <Avatar>
+            <AvatarFallback>AD</AvatarFallback>
+          </Avatar>
         </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {stats.map((stat) => (
+            <Card key={stat.title}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">{stat.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <p className={`text-xs mt-1 ${stat.up ? "text-green-600" : "text-red-500"}`}>
+                  {stat.change} from last month
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Recent Orders */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Orders</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">{order.id}</TableCell>
+                    <TableCell>{order.customer}</TableCell>
+                    <TableCell>{order.amount}</TableCell>
+                    <TableCell>
+                      <Badge variant={statusColor[order.status]}>{order.status}</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
